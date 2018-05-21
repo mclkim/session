@@ -1,0 +1,14 @@
+{
+  "require": {
+    "php": ">=5.4.0",
+    "mclkim/timer": "^1.0",
+    "ext-openssl": "*",
+    "ext-mbstring": "*",
+    "paragonie/random_compat": "^2.0.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "Mcl\\Session\\": "src/"
+    }
+  }
+}
