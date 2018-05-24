@@ -3,7 +3,7 @@
   "description": "",
   "type": "library",
   "keywords": [
-    "database"
+    "session"
   ],
   "license": "MIT",
   "homepage": "http://mclkim.github.com",
