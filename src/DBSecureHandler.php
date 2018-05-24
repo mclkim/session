@@ -15,11 +15,11 @@ class DbSecureHandler extends SecureHandler
 {
     protected $db;
 
-    function __construct($pdo = null)
+    function __construct($pdo = null, $logger = null)
     {
         parent::__construct();
 
-        $this->db = new DBManager($pdo);
+        $this->db = new DBManager($pdo, $logger);
 
         // register_shutdown_function('session_write_close');
     }

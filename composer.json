@@ -19,6 +19,7 @@
   ],
   "require": {
     "php": ">=5.4.0",
+    "mclkim/db": "dev-master",
     "mclkim/timer": "dev-master",
     "ext-openssl": "*",
     "ext-mbstring": "*",
