@@ -11,7 +11,7 @@ namespace Mcl\Session;
 use Mcl\Db\DBManager;
 use Mcl\Timer\Timestamp;
 
-class DbSecureHandler extends SecureHandler
+class DbSecureHandler extends SecureHandler //implements SessionHandlerInterface
 {
     protected $db;
 
@@ -29,6 +29,7 @@ class DbSecureHandler extends SecureHandler
 
     public function open($save_path, $session_name)
     {
+        $this->key = $this->getKey('KEY_' . $session_name);
         return true;
     }
 
@@ -39,43 +40,54 @@ class DbSecureHandler extends SecureHandler
 
     public function read($id)
     {
-        $sql = "SELECT privilege,session_key FROM sessions WHERE id = ?";
+        $sql = "SELECT session_data FROM ue_user_session WHERE id = ?";
 
-        $row = $this->db->executePreparedQueryToMap($sql, array(
+//        $row = $this->db->executePreparedQueryToMap($sql, array(
+//            $id
+//        ));
+
+
+//        if (is_null($row['session_data'])) {
+//            return '';
+//        }
+
+        $session_data = $this->db->executePreparedQueryOne($sql, array(
             $id
         ));
 
-        if (is_null($row['privilege'])) {
+        if (empty($session_data)) {
             return '';
         }
 
-        $key = $row['session_key'];
-        $privilege = base64_decode($row['privilege']);
-        $data = $this->decrypt($privilege, $key);
-//        settype($data, "string");
+        $session_data = base64_decode($session_data);
+        $data = $this->decrypt($session_data, $this->key);
         return $data;
     }
 
     public function write($id, $data)
     {
-        $time = time() + get_cfg_var("session.gc_maxlifetime");
-
-        $key = $this->session_key($id);
-        $privilege = $this->encrypt($data, $key);
+        $session_data = $this->encrypt($data, $this->key);
 
         $data = array(
             'id' => $id,
-            'privilege' => base64_encode($privilege),
-            'session_key' => $key,
+            'address' => $_SERVER ['REMOTE_ADDR'],
+            'agent' => $_SERVER ['HTTP_USER_AGENT'],
+            'session_data' => base64_encode($session_data),
+            'session_key' => base64_encode($this->key),
+            'server' => $_SERVER ['HTTP_HOST'],
+            'request' => substr($_SERVER ['REQUEST_URI'], 0, 255),
+            'referer' => isset ($_SERVER ['HTTP_REFERER']) ? substr($_SERVER ['HTTP_REFERER'], 0, 255) : '',
             'updated' => Timestamp::getUNIXtime()
         );
 
-        return $res = $this->db->AutoExecuteReplace('sessions', $data);
+        $res = $this->db->AutoExecuteReplace('ue_user_session', $data);
+
+        return true;
     }
 
     public function destroy($id)
     {
-        $sql = "DELETE FROM sessions WHERE id = ?";
+        $sql = "DELETE FROM ue_user_session WHERE id = ?";
 
         $res = $this->db->executePreparedUpdate($sql, array(
             $id
@@ -86,7 +98,7 @@ class DbSecureHandler extends SecureHandler
 
     public function gc($maxlifetime)
     {
-        $sql = "DELETE FROM sessions WHERE updated < ?";
+        $sql = "DELETE FROM ue_user_session WHERE updated < ?";
 
         $res = $this->db->executePreparedUpdate($sql, array(
             Timestamp::getUNIXtime() - $maxlifetime
@@ -95,15 +107,18 @@ class DbSecureHandler extends SecureHandler
         return true;
     }
 
-    private function session_key($session_id)
+    private function session_key($id)
     {
-        $sql = "SELECT session_key FROM sessions WHERE id = ?";
+        $sql = "SELECT session_key FROM ue_user_session WHERE id = ?";
 
         $res = $this->db->executePreparedQueryOne($sql, array(
-            $session_id
+            $id
         ));
 
-        return ($res) ? $res : base64_encode(random_bytes(64));
+        $key = random_bytes(64); // 32 for encryption and 32 for authentication
+        $encKey = base64_encode($key);
+
+        return ($res) ? base64_decode($res) : $encKey;
     }
 }
 

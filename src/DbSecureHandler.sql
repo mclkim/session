@@ -8,23 +8,22 @@ DROP DATABASE IF EXISTS `sessionsDB`;
 CREATE DATABASE IF NOT EXISTS `sessionsDB`
 USE `sessionsDB`;
 -- ---------------------------------------------------------------
-DROP TABLE IF EXISTS `sessions`;
-CREATE TABLE `sessions` (
+DROP TABLE IF EXISTS `ue_user_session`;
+CREATE TABLE `ue_user_session` (
  `no` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
  `id` VARCHAR(255) NOT NULL DEFAULT '' COMMENT '세션ID',
  `address` VARCHAR(15) NOT NULL DEFAULT '' COMMENT '세션접속IP',
  `agent` VARCHAR(512) NOT NULL DEFAULT '' COMMENT '세션접속Agent',
  `userid` VARCHAR(64) DEFAULT NULL COMMENT '사용자ID',
- `preexistence` INT(11) DEFAULT NULL COMMENT '존재여부',
- `privilege` TEXT COMMENT '세션정보',
+ `session_data` TEXT NOT NULL COMMENT '세션정보',
+ `session_key` TEXT NOT NULL COMMENT '세션KEY',
  `server` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '접속서버정보',
  `request` VARCHAR(255) NOT NULL DEFAULT '' COMMENT '요청정보',
  `referer` VARCHAR(255) DEFAULT NULL COMMENT '참조정보',
  `timer` FLOAT NOT NULL DEFAULT '0' COMMENT '타이머',
  `created` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성시간',
  `updated` INT(11) NOT NULL DEFAULT '0' COMMENT '수정시간',
- `session_key` TEXT NOT NULL COMMENT '세션KEY',
  PRIMARY KEY (`no`),
- UNIQUE KEY `idx_sessions_id` (`id`),
+ UNIQUE KEY `idx_session_id` (`id`),
  KEY `updated` (`updated`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8
