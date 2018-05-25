@@ -20,8 +20,11 @@ class DbSecureHandler extends SecureHandler
         parent::__construct();
 
         $this->db = new DBManager($pdo, $logger);
+    }
 
-        // register_shutdown_function('session_write_close');
+    public function __destruct()
+    {
+        session_write_close(true);
     }
 
     public function open($save_path, $session_name)
@@ -49,7 +52,7 @@ class DbSecureHandler extends SecureHandler
         $key = $row['session_key'];
         $privilege = base64_decode($row['privilege']);
         $data = $this->decrypt($privilege, $key);
-        settype($data, "string");
+//        settype($data, "string");
         return $data;
     }
 
