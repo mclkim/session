@@ -26,6 +26,7 @@ class DbSecureHandler extends SecureHandler
 
     public function open($save_path, $session_name)
     {
+        $this->key = $this->getKey('KEY_' . $session_name);
         return true;
     }
 
@@ -46,24 +47,22 @@ class DbSecureHandler extends SecureHandler
             return '';
         }
 
-        $key = $row['session_key'];
+        // $this->key = $row['session_key'];
         $privilege = base64_decode($row['privilege']);
-        $data = $this->decrypt($privilege, $key);
-        settype($data, "string");
+        $data = $this->decrypt($privilege, $this->key);
+        // settype($data, "string");
         return $data;
     }
 
     public function write($id, $data)
     {
-        $time = time() + get_cfg_var("session.gc_maxlifetime");
-
-        $key = $this->session_key($id);
-        $privilege = $this->encrypt($data, $key);
+        // $key = $this->session_key($id);
+        $privilege = $this->encrypt($data, $this->key);
 
         $data = array(
             'id' => $id,
             'privilege' => base64_encode($privilege),
-            'session_key' => $key,
+            // 'session_key' => $this->key,
             'updated' => Timestamp::getUNIXtime()
         );
 
@@ -92,15 +91,18 @@ class DbSecureHandler extends SecureHandler
         return true;
     }
 
-    private function session_key($session_id)
+    private function session_key($id)
     {
         $sql = "SELECT session_key FROM sessions WHERE id = ?";
 
         $res = $this->db->executePreparedQueryOne($sql, array(
-            $session_id
+            $id
         ));
 
-        return ($res) ? $res : base64_encode(random_bytes(64));
+        $key = random_bytes(64); // 32 for encryption and 32 for authentication
+        $encKey = base64_encode($key);
+
+        return ($res) ? base64_decode($res) : $encKey;
     }
 }
 
